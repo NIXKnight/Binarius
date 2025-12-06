@@ -16,9 +16,7 @@ func TestInitCommand(t *testing.T) {
 	tmpHome := t.TempDir()
 
 	// Override home directory for this test
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tmpHome)
 
 	// Expected directory structure
 	binariusHome := filepath.Join(tmpHome, ".binarius")
@@ -157,16 +155,9 @@ func TestInitCommand(t *testing.T) {
 func TestInitPathWarning(t *testing.T) {
 	tmpHome := t.TempDir()
 
-	originalHome := os.Getenv("HOME")
-	originalPath := os.Getenv("PATH")
-	os.Setenv("HOME", tmpHome)
-	defer func() {
-		os.Setenv("HOME", originalHome)
-		os.Setenv("PATH", originalPath)
-	}()
-
+	t.Setenv("HOME", tmpHome)
 	// Set PATH to not include ~/.local/bin
-	os.Setenv("PATH", "/usr/bin:/bin")
+	t.Setenv("PATH", "/usr/bin:/bin")
 
 	// Run init and capture warning
 	// This will be implemented in cmd/init.go with warning output

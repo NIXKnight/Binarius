@@ -84,7 +84,7 @@ func SaveRegistry(registry *Registry, path string) error {
 	// Atomic rename
 	if err := os.Rename(tmpPath, path); err != nil {
 		// Clean up temporary file on failure
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to save registry file: %w", err)
 	}
 

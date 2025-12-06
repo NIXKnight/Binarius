@@ -57,8 +57,8 @@ func (m *Manager) Update(source, target string) error {
 		return fmt.Errorf("failed to create temporary file for atomic update: %w", err)
 	}
 	tmpLinkPath := tmpLink.Name()
-	tmpLink.Close()
-	os.Remove(tmpLinkPath) // Remove the file, we just need the name
+	_ = tmpLink.Close()
+	_ = os.Remove(tmpLinkPath) // Remove the file, we just need the name
 
 	// Create temporary symlink
 	if err := os.Symlink(source, tmpLinkPath); err != nil {
@@ -68,7 +68,7 @@ func (m *Manager) Update(source, target string) error {
 	// Atomic rename: replace old symlink with new one
 	if err := os.Rename(tmpLinkPath, target); err != nil {
 		// Clean up temporary symlink on failure
-		os.Remove(tmpLinkPath)
+		_ = os.Remove(tmpLinkPath)
 		return fmt.Errorf("failed to atomically update symlink: %w", err)
 	}
 

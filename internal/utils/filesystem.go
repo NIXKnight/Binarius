@@ -80,8 +80,8 @@ func IsWritable(path string) bool {
 		if err != nil {
 			return false
 		}
-		f.Close()
-		os.Remove(testFile)
+		_ = f.Close()
+		_ = os.Remove(testFile)
 		return true
 	}
 
@@ -90,6 +90,6 @@ func IsWritable(path string) bool {
 	if err != nil {
 		return false
 	}
-	f.Close()
+	_ = f.Close()
 	return true
 }

@@ -22,9 +22,7 @@ func TestInstallWorkflow(t *testing.T) {
 	// Setup temporary home directory
 	tmpHome := t.TempDir()
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tmpHome)
 
 	// Initialize binarius structure
 	if err := runInit(); err != nil {
@@ -51,13 +49,13 @@ func TestInstallWorkflow(t *testing.T) {
 	mockChecksum := computeSHA256(mockZip)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip":
+		switch r.URL.Path {
+		case "/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip":
 			w.Header().Set("Content-Type", "application/zip")
 			if _, err := w.Write(mockZip); err != nil {
 				t.Errorf("failed to write mock response: %v", err)
 			}
-		case r.URL.Path == "/terraform/1.6.0/terraform_1.6.0_SHA256SUMS":
+		case "/terraform/1.6.0/terraform_1.6.0_SHA256SUMS":
 			checksumContent := fmt.Sprintf("%s  terraform_1.6.0_linux_amd64.zip\n", mockChecksum)
 			w.Header().Set("Content-Type", "text/plain")
 			if _, err := w.Write([]byte(checksumContent)); err != nil {
@@ -175,9 +173,7 @@ func TestInstallWorkflow(t *testing.T) {
 func TestInstallChecksumMismatch(t *testing.T) {
 	tmpHome := t.TempDir()
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tmpHome)
 
 	if err := runInit(); err != nil {
 		t.Fatalf("failed to init: %v", err)
@@ -194,11 +190,12 @@ func TestInstallChecksumMismatch(t *testing.T) {
 
 	// Create server that returns ZIP
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/terraform.zip" {
+		switch r.URL.Path {
+		case "/terraform.zip":
 			if _, err := w.Write(mockZip); err != nil {
 				t.Errorf("failed to write mock response: %v", err)
 			}
-		} else if r.URL.Path == "/terraform_SHA256SUMS" {
+		case "/terraform_SHA256SUMS":
 			// Return WRONG checksum
 			wrongChecksum := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 			checksumContent := fmt.Sprintf("%s  terraform_1.6.0_linux_amd64.zip\n", wrongChecksum)
@@ -228,9 +225,7 @@ func TestInstallChecksumMismatch(t *testing.T) {
 func TestInstallNetworkError(t *testing.T) {
 	tmpHome := t.TempDir()
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tmpHome)
 
 	if err := runInit(); err != nil {
 		t.Fatalf("failed to init: %v", err)
@@ -259,9 +254,7 @@ func TestInstallNetworkError(t *testing.T) {
 func TestInstallAlreadyInstalled(t *testing.T) {
 	tmpHome := t.TempDir()
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpHome)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tmpHome)
 
 	if err := runInit(); err != nil {
 		t.Fatalf("failed to init: %v", err)
@@ -321,8 +314,8 @@ func createMockZip(t *testing.T, binaryName string, content []byte) []byte {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+	defer func() { _ = tmpFile.Close() }()
 
 	zipWriter := zip.NewWriter(tmpFile)
 	writer, err := zipWriter.Create(binaryName)
