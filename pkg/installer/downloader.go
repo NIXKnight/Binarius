@@ -32,7 +32,7 @@ func Download(url, destPath string) error {
 			"Check your internet connection and ensure the URL is correct",
 		)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Check HTTP status
 	if resp.StatusCode != http.StatusOK {
@@ -68,7 +68,7 @@ func Download(url, destPath string) error {
 	if err != nil {
 		_ = destFile.Close()
 		// Clean up partial download
-		os.Remove(destPath)
+		_ = os.Remove(destPath)
 		return utils.NewUserError(
 			"Download interrupted",
 			err.Error(),

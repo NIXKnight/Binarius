@@ -125,7 +125,7 @@ func ExtractTarGz(tarGzPath, destDir string) error {
 			"Ensure the file is a valid gzip archive",
 		)
 	}
-	defer gzipReader.Close()
+	defer func() { _ = gzipReader.Close() }()
 
 	// Create tar reader
 	tarReader := tar.NewReader(gzipReader)

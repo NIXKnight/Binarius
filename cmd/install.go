@@ -182,7 +182,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	fmt.Println("Verifying download integrity...")
 	if err := installer.VerifyChecksum(archivePath, expectedChecksum); err != nil {
 		// Delete corrupted file
-		os.Remove(archivePath)
+		_ = os.Remove(archivePath)
 		return utils.NewUserError(
 			"Checksum verification failed",
 			err.Error(),

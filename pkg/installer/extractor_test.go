@@ -288,10 +288,10 @@ func createTestZip(t *testing.T, zipPath string, files map[string][]byte) {
 	if err != nil {
 		t.Fatalf("failed to create zip file: %v", err)
 	}
-	defer zipFile.Close()
+	defer func() { _ = zipFile.Close() }()
 
 	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
+	defer func() { _ = zipWriter.Close() }()
 
 	for name, content := range files {
 		writer, err := zipWriter.Create(name)
@@ -312,13 +312,13 @@ func createTestTarGz(t *testing.T, tarGzPath string, files map[string][]byte) {
 	if err != nil {
 		t.Fatalf("failed to create tar.gz file: %v", err)
 	}
-	defer tarGzFile.Close()
+	defer func() { _ = tarGzFile.Close() }()
 
 	gzipWriter := gzip.NewWriter(tarGzFile)
-	defer gzipWriter.Close()
+	defer func() { _ = gzipWriter.Close() }()
 
 	tarWriter := tar.NewWriter(gzipWriter)
-	defer tarWriter.Close()
+	defer func() { _ = tarWriter.Close() }()
 
 	for name, content := range files {
 		// Create parent directories in tar if name contains /
