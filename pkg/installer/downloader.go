@@ -62,17 +62,25 @@ func Download(url, destPath string) error {
 			"Ensure you have write permissions for the cache directory",
 		)
 	}
-	defer destFile.Close()
 
 	// Stream download to file
 	_, err = io.Copy(destFile, resp.Body)
 	if err != nil {
+		_ = destFile.Close()
 		// Clean up partial download
 		os.Remove(destPath)
 		return utils.NewUserError(
 			"Download interrupted",
 			err.Error(),
 			"Network connection may have been lost. Please try again.",
+		)
+	}
+
+	if err := destFile.Close(); err != nil {
+		return utils.NewUserError(
+			"Failed to close downloaded file",
+			err.Error(),
+			"Disk may be full or write permissions may have changed",
 		)
 	}
 

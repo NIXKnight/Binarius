@@ -30,7 +30,7 @@ func ExtractZip(zipPath, destDir string) error {
 			"Ensure the file is a valid ZIP archive and is not corrupted",
 		)
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	// Create destination directory if it doesn't exist
 	if err := os.MkdirAll(destDir, 0755); err != nil {
@@ -76,18 +76,22 @@ func extractZipFile(file *zip.File, destDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open file in archive %s: %w", file.Name, err)
 	}
-	defer srcFile.Close()
+	defer func() { _ = srcFile.Close() }()
 
 	// Create destination file
 	destFile, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file %s: %w", targetPath, err)
 	}
-	defer destFile.Close()
 
 	// Copy content
 	if _, err := io.Copy(destFile, srcFile); err != nil {
+		_ = destFile.Close()
 		return fmt.Errorf("failed to extract file %s: %w", file.Name, err)
+	}
+
+	if err := destFile.Close(); err != nil {
+		return fmt.Errorf("failed to close extracted file %s: %w", targetPath, err)
 	}
 
 	return nil
@@ -110,7 +114,7 @@ func ExtractTarGz(tarGzPath, destDir string) error {
 			"Ensure the file exists and is readable",
 		)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Create gzip reader
 	gzipReader, err := gzip.NewReader(file)
@@ -180,11 +184,15 @@ func extractTarFile(tarReader *tar.Reader, header *tar.Header, destDir string) e
 		if err != nil {
 			return fmt.Errorf("failed to create destination file %s: %w", targetPath, err)
 		}
-		defer destFile.Close()
 
 		// Copy content
 		if _, err := io.Copy(destFile, tarReader); err != nil {
+			_ = destFile.Close()
 			return fmt.Errorf("failed to extract file %s: %w", header.Name, err)
+		}
+
+		if err := destFile.Close(); err != nil {
+			return fmt.Errorf("failed to close extracted file %s: %w", targetPath, err)
 		}
 
 	default:
