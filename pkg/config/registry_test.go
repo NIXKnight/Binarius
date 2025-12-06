@@ -51,8 +51,13 @@ func TestLoadRegistry(t *testing.T) {
 						},
 					},
 				}
-				jsonData, _ := json.MarshalIndent(registry, "", "  ")
-				os.WriteFile(path, jsonData, 0644)
+				jsonData, err := json.MarshalIndent(registry, "", "  ")
+				if err != nil {
+					panic(err) // Panic is acceptable in test setup
+				}
+				if err := os.WriteFile(path, jsonData, 0644); err != nil {
+					panic(err) // Panic is acceptable in test setup
+				}
 			},
 			wantErr: false,
 			validate: func(t *testing.T, r *Registry) {
@@ -88,7 +93,9 @@ func TestLoadRegistry(t *testing.T) {
 		{
 			name: "empty json object",
 			setupFile: func(path string) {
-				os.WriteFile(path, []byte("{}"), 0644)
+				if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+					panic(err) // Panic is acceptable in test setup
+				}
 			},
 			wantErr: false,
 			validate: func(t *testing.T, r *Registry) {
@@ -100,7 +107,8 @@ func TestLoadRegistry(t *testing.T) {
 		{
 			name: "invalid json",
 			setupFile: func(path string) {
-				os.WriteFile(path, []byte("invalid json"), 0644)
+				// Intentionally write invalid JSON to test error handling in LoadRegistry()
+				_ = os.WriteFile(path, []byte("invalid json"), 0644)
 			},
 			wantErr: true,
 		},

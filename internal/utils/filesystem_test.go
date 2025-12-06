@@ -61,13 +61,13 @@ func TestValidatePath(t *testing.T) {
 func TestEnsureDir(t *testing.T) {
 	tests := []struct {
 		name    string
-		setup   func(string) string // returns path to test
+		setup   func(*testing.T, string) string // returns path to test
 		perm    os.FileMode
 		wantErr bool
 	}{
 		{
 			name: "create new directory",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				return filepath.Join(base, "newdir")
 			},
 			perm:    0755,
@@ -75,7 +75,7 @@ func TestEnsureDir(t *testing.T) {
 		},
 		{
 			name: "create nested directories",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				return filepath.Join(base, "parent", "child", "grandchild")
 			},
 			perm:    0755,
@@ -83,9 +83,11 @@ func TestEnsureDir(t *testing.T) {
 		},
 		{
 			name: "existing directory - no error",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				dir := filepath.Join(base, "existing")
-				os.MkdirAll(dir, 0755)
+				if err := os.MkdirAll(dir, 0755); err != nil {
+					t.Fatalf("failed to create directory: %v", err)
+				}
 				return dir
 			},
 			perm:    0755,
@@ -93,9 +95,11 @@ func TestEnsureDir(t *testing.T) {
 		},
 		{
 			name: "path exists as file - error",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				file := filepath.Join(base, "file.txt")
-				os.WriteFile(file, []byte("test"), 0644)
+				if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
+					t.Fatalf("failed to write file: %v", err)
+				}
 				return file
 			},
 			perm:    0755,
@@ -106,7 +110,7 @@ func TestEnsureDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tempDir := t.TempDir()
-			path := tt.setup(tempDir)
+			path := tt.setup(t, tempDir)
 
 			err := EnsureDir(path, tt.perm)
 			if (err != nil) != tt.wantErr {
@@ -131,48 +135,56 @@ func TestEnsureDir(t *testing.T) {
 func TestIsWritable(t *testing.T) {
 	tests := []struct {
 		name  string
-		setup func(string) string // returns path to test
+		setup func(*testing.T, string) string // returns path to test
 		want  bool
 	}{
 		{
 			name: "writable directory",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				dir := filepath.Join(base, "writable")
-				os.MkdirAll(dir, 0755)
+				if err := os.MkdirAll(dir, 0755); err != nil {
+					t.Fatalf("failed to create directory: %v", err)
+				}
 				return dir
 			},
 			want: true,
 		},
 		{
 			name: "writable file",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				file := filepath.Join(base, "writable.txt")
-				os.WriteFile(file, []byte("test"), 0644)
+				if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
+					t.Fatalf("failed to write file: %v", err)
+				}
 				return file
 			},
 			want: true,
 		},
 		{
 			name: "non-existent path in writable directory",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				return filepath.Join(base, "nonexistent")
 			},
 			want: true,
 		},
 		{
 			name: "read-only directory",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				dir := filepath.Join(base, "readonly")
-				os.MkdirAll(dir, 0555)
+				if err := os.MkdirAll(dir, 0555); err != nil {
+					t.Fatalf("failed to create directory: %v", err)
+				}
 				return dir
 			},
 			want: false,
 		},
 		{
 			name: "read-only file",
-			setup: func(base string) string {
+			setup: func(t *testing.T, base string) string {
 				file := filepath.Join(base, "readonly.txt")
-				os.WriteFile(file, []byte("test"), 0444)
+				if err := os.WriteFile(file, []byte("test"), 0444); err != nil {
+					t.Fatalf("failed to write file: %v", err)
+				}
 				return file
 			},
 			want: false,
@@ -182,7 +194,7 @@ func TestIsWritable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tempDir := t.TempDir()
-			path := tt.setup(tempDir)
+			path := tt.setup(t, tempDir)
 
 			got := IsWritable(path)
 			if got != tt.want {

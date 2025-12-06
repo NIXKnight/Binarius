@@ -43,13 +43,13 @@ func TestDefaultConfig(t *testing.T) {
 func TestLoad(t *testing.T) {
 	tests := []struct {
 		name      string
-		setupFile func(string) // Function to create test file
+		setupFile func(*testing.T, string) // Function to create test file
 		wantErr   bool
 		validate  func(*testing.T, *Config) // Validation function
 	}{
 		{
 			name: "valid config file",
-			setupFile: func(path string) {
+			setupFile: func(t *testing.T, path string) {
 				content := `defaults:
   terraform: v1.6.0
   tofu: v1.6.0
@@ -58,7 +58,9 @@ paths:
   bin_dir: ~/.local/bin
   cache_dir: ~/.binarius/cache
 `
-				os.WriteFile(path, []byte(content), 0644)
+				if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+					t.Fatalf("failed to write test config: %v", err)
+				}
 			},
 			wantErr: false,
 			validate: func(t *testing.T, c *Config) {
@@ -75,8 +77,10 @@ paths:
 		},
 		{
 			name: "empty config file",
-			setupFile: func(path string) {
-				os.WriteFile(path, []byte(""), 0644)
+			setupFile: func(t *testing.T, path string) {
+				if err := os.WriteFile(path, []byte(""), 0644); err != nil {
+					t.Fatalf("failed to write empty config: %v", err)
+				}
 			},
 			wantErr: false,
 			validate: func(t *testing.T, c *Config) {
@@ -87,14 +91,16 @@ paths:
 		},
 		{
 			name: "config with empty defaults",
-			setupFile: func(path string) {
+			setupFile: func(t *testing.T, path string) {
 				content := `defaults: {}
 paths:
   binarius_home: ~/.binarius
   bin_dir: ~/.local/bin
   cache_dir: ~/.binarius/cache
 `
-				os.WriteFile(path, []byte(content), 0644)
+				if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+					t.Fatalf("failed to write config: %v", err)
+				}
 			},
 			wantErr: false,
 			validate: func(t *testing.T, c *Config) {
@@ -108,14 +114,15 @@ paths:
 		},
 		{
 			name: "invalid yaml",
-			setupFile: func(path string) {
-				os.WriteFile(path, []byte("invalid: yaml: content:"), 0644)
+			setupFile: func(t *testing.T, path string) {
+				// Ignore error for invalid yaml test case - we want this to fail during Load()
+				_ = os.WriteFile(path, []byte("invalid: yaml: content:"), 0644)
 			},
 			wantErr: true,
 		},
 		{
 			name: "non-existent file",
-			setupFile: func(path string) {
+			setupFile: func(t *testing.T, path string) {
 				// Don't create the file
 			},
 			wantErr: true,
@@ -127,7 +134,7 @@ paths:
 			tempDir := t.TempDir()
 			configPath := filepath.Join(tempDir, "config.yaml")
 
-			tt.setupFile(configPath)
+			tt.setupFile(t, configPath)
 
 			config, err := Load(configPath)
 			if (err != nil) != tt.wantErr {
