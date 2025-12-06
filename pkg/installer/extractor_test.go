@@ -105,7 +105,7 @@ func TestExtractZip(t *testing.T) {
 				return zipPath, destDir, func() {}
 			},
 			wantErr:     true,
-			errContains: "path traversal",
+			errContains: "Path traversal",
 		},
 		{
 			name: "create destination directory if it does not exist",
@@ -142,7 +142,9 @@ func TestExtractZip(t *testing.T) {
 			}
 
 			if err != nil && tt.errContains != "" {
-				// Error message checking after implementation
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, want error containing %q", err, tt.errContains)
+				}
 				return
 			}
 
@@ -248,7 +250,7 @@ func TestExtractTarGz(t *testing.T) {
 				return tarGzPath, destDir, func() {}
 			},
 			wantErr:     true,
-			errContains: "path traversal",
+			errContains: "Path traversal",
 		},
 	}
 
@@ -265,7 +267,9 @@ func TestExtractTarGz(t *testing.T) {
 			}
 
 			if err != nil && tt.errContains != "" {
-				// Error message checking after implementation
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, want error containing %q", err, tt.errContains)
+				}
 				return
 			}
 
@@ -365,14 +369,14 @@ func TestValidateExtractPath(t *testing.T) {
 			destDir:     "/home/user/.binarius/tools/terraform/v1.6.0",
 			targetPath:  "/home/user/.binarius/tools/terraform/../../../etc/passwd",
 			wantErr:     true,
-			errContains: "path traversal",
+			errContains: "Path traversal",
 		},
 		{
 			name:        "reject absolute path outside destDir",
 			destDir:     "/home/user/.binarius/tools/terraform/v1.6.0",
 			targetPath:  "/etc/passwd",
 			wantErr:     true,
-			errContains: "path traversal",
+			errContains: "Path traversal",
 		},
 	}
 
@@ -386,7 +390,9 @@ func TestValidateExtractPath(t *testing.T) {
 			}
 
 			if err != nil && tt.errContains != "" {
-				// Error message checking after implementation
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, want error containing %q", err, tt.errContains)
+				}
 			}
 		})
 	}

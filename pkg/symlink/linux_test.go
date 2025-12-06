@@ -3,6 +3,7 @@ package symlink
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -187,7 +188,9 @@ func TestUpdate(t *testing.T) {
 			}
 
 			if err != nil && tt.errContains != "" {
-				// Error message checking after implementation
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, want error containing %q", err, tt.errContains)
+				}
 				return
 			}
 
@@ -346,7 +349,9 @@ func TestVerify(t *testing.T) {
 			}
 
 			if err != nil && tt.errContains != "" {
-				// Error message checking after implementation
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, want error containing %q", err, tt.errContains)
+				}
 			}
 		})
 	}
