@@ -1,0 +1,32 @@
+name: PR Checks
+
+# Validate pull requests before merging to main
+# Uses reusable quality-and-build workflow with PR-appropriate settings
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+# Read-only permissions for PR validation
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate PR
+    uses: ./.github/workflows/quality-and-build.yml
+    with:
+      # Development build - no version metadata injection
+      inject-version: false
+      version: 'dev'
+
+      # No checksums needed for PR validation
+      generate-checksums: false
+
+      # Upload artifacts for review but with short retention
+      upload-artifacts: true
+      artifact-retention-days: 3
+
+      # Tool versions (same as release builds)
+      go-version: '1.25'
+      golangci-lint-version: 'v1.61.0'
