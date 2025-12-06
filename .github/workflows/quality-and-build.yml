@@ -1,0 +1,198 @@
+name: Quality Checks & Build
+
+# Reusable workflow for quality validation and binary compilation
+# Called by both PR checks and release workflows to ensure consistency
+on:
+  workflow_call:
+    inputs:
+      # Version injection control
+      inject-version:
+        description: 'Enable version metadata injection into binaries'
+        type: boolean
+        required: false
+        default: false
+
+      version:
+        description: 'Version string (e.g., v1.0.0 or dev)'
+        type: string
+        required: false
+        default: 'dev'
+
+      build-date:
+        description: 'Build timestamp in ISO 8601 format'
+        type: string
+        required: false
+        default: ''
+
+      git-commit:
+        description: 'Git commit SHA'
+        type: string
+        required: false
+        default: ''
+
+      # Build configuration
+      generate-checksums:
+        description: 'Generate SHA256SUMS file for binaries'
+        type: boolean
+        required: false
+        default: false
+
+      upload-artifacts:
+        description: 'Upload binaries as workflow artifacts'
+        type: boolean
+        required: false
+        default: true
+
+      artifact-retention-days:
+        description: 'Number of days to retain artifacts'
+        type: number
+        required: false
+        default: 7
+
+      # Tool versions
+      go-version:
+        description: 'Go version to use for builds'
+        type: string
+        required: false
+        default: '1.25'
+
+      golangci-lint-version:
+        description: 'golangci-lint version to use'
+        type: string
+        required: false
+        default: 'v1.61.0'
+
+    outputs:
+      artifact-name:
+        description: 'Name of uploaded artifact (for downloading in callers)'
+        value: 'binarius-binaries'
+
+jobs:
+  # Quality validation - must pass before building
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0  # Full history for proper version detection
+
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache: true  # Cache Go modules for faster builds
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${{ inputs.golangci-lint-version }}
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Verify Go modules
+        run: |
+          go mod download
+          go mod verify
+
+      - name: Check code formatting
+        run: |
+          make fmt
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Code is not properly formatted"
+            echo "Run 'make fmt' locally and commit the changes"
+            git diff
+            exit 1
+          fi
+
+      - name: Run linter
+        run: make lint
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Run race detector tests
+        run: make test-race
+
+  # Build binaries for Linux platforms
+  build:
+    name: Build Binaries
+    needs: quality-checks  # Only build if quality checks pass
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache: true
+
+      - name: Build linux-amd64 binary
+        run: |
+          # Start with base optimization flags
+          LDFLAGS="-s -w"
+
+          # Add version metadata if enabled (for releases)
+          if [ "${{ inputs.inject-version }}" == "true" ]; then
+            LDFLAGS="${LDFLAGS} -X main.Version=${{ inputs.version }} -X main.BuildDate=${{ inputs.build-date }} -X main.GitCommit=${{ inputs.git-commit }}"
+            echo "Building with version metadata: ${{ inputs.version }}"
+          else
+            echo "Building without version metadata (development build)"
+          fi
+
+          # Build binary
+          GOOS=linux GOARCH=amd64 go build \
+            -ldflags="${LDFLAGS}" \
+            -o binarius-linux-amd64 .
+
+          # Verify binary was built and is executable
+          chmod +x binarius-linux-amd64
+          ls -lh binarius-linux-amd64
+          file binarius-linux-amd64
+
+      - name: Build linux-arm64 binary
+        run: |
+          # Start with base optimization flags
+          LDFLAGS="-s -w"
+
+          # Add version metadata if enabled (for releases)
+          if [ "${{ inputs.inject-version }}" == "true" ]; then
+            LDFLAGS="${LDFLAGS} -X main.Version=${{ inputs.version }} -X main.BuildDate=${{ inputs.build-date }} -X main.GitCommit=${{ inputs.git-commit }}"
+          fi
+
+          # Build binary
+          GOOS=linux GOARCH=arm64 go build \
+            -ldflags="${LDFLAGS}" \
+            -o binarius-linux-arm64 .
+
+          # Verify binary was built
+          chmod +x binarius-linux-arm64
+          ls -lh binarius-linux-arm64
+          file binarius-linux-arm64
+
+      - name: Generate SHA256 checksums
+        if: inputs.generate-checksums
+        run: |
+          # Create SHA256SUMS file with checksums for all binaries
+          sha256sum binarius-linux-amd64 binarius-linux-arm64 > SHA256SUMS
+
+          # Display checksums for verification
+          echo "Generated checksums:"
+          cat SHA256SUMS
+
+      - name: Upload build artifacts
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binarius-binaries
+          path: |
+            binarius-linux-amd64
+            binarius-linux-arm64
+            SHA256SUMS
+          retention-days: ${{ inputs.artifact-retention-days }}
+          if-no-files-found: error

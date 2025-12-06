@@ -1,0 +1,154 @@
+name: Release
+
+# Trigger on version tags (e.g., v1.0.0, v2.1.3)
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# Minimal permissions - only what's needed for releases
+permissions:
+  contents: write
+
+jobs:
+  # Extract version metadata from git tag
+  extract-version:
+    name: Extract Version Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+      build-date: ${{ steps.extract.outputs.build-date }}
+      git-commit: ${{ steps.extract.outputs.git-commit }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0  # Full history for proper version detection
+
+      - name: Extract metadata
+        id: extract
+        run: |
+          # Extract version from git tag (e.g., v1.0.0)
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+          # Get build timestamp in ISO 8601 format
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "build-date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+
+          # Get full git commit SHA
+          GIT_COMMIT=$(git rev-parse HEAD)
+          echo "git-commit=${GIT_COMMIT}" >> $GITHUB_OUTPUT
+
+          echo "Building version ${VERSION} (commit: ${GIT_COMMIT:0:7}) at ${BUILD_DATE}"
+
+  # Run quality checks and build binaries using reusable workflow
+  quality-and-build:
+    name: Quality Checks & Build
+    needs: extract-version
+    uses: ./.github/workflows/quality-and-build.yml
+    with:
+      # Enable version injection for releases
+      inject-version: true
+      version: ${{ needs.extract-version.outputs.version }}
+      build-date: ${{ needs.extract-version.outputs.build-date }}
+      git-commit: ${{ needs.extract-version.outputs.git-commit }}
+
+      # Generate checksums for release artifacts
+      generate-checksums: true
+
+      # Upload artifacts for release creation
+      upload-artifacts: true
+      artifact-retention-days: 7
+
+      # Tool versions
+      go-version: '1.25'
+      golangci-lint-version: 'v1.61.0'
+
+  # Create GitHub release with artifacts
+  create-release:
+    name: Create GitHub Release
+    needs: [extract-version, quality-and-build]  # Wait for both metadata and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0  # Need full history for release notes
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.quality-and-build.outputs.artifact-name }}
+
+      - name: Verify artifacts downloaded
+        run: |
+          echo "Downloaded artifacts:"
+          ls -lh
+
+          # Verify all expected files are present
+          for file in binarius-linux-amd64 binarius-linux-arm64 SHA256SUMS; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Missing required file: $file"
+              exit 1
+            fi
+          done
+
+          # Verify checksums are correct
+          echo "Verifying checksums..."
+          sha256sum -c SHA256SUMS
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true  # Create as draft for manual review before publishing
+          generate_release_notes: true  # Auto-generate notes from commits
+          name: "Release ${{ needs.extract-version.outputs.version }}"
+          body: |
+            ## Binarius ${{ needs.extract-version.outputs.version }}
+
+            Universal binary version manager for Linux.
+
+            ### Installation
+
+            Download the appropriate binary for your architecture:
+
+            **Linux AMD64 (x86_64)**:
+            ```bash
+            curl -LO https://github.com/nixknight/binarius/releases/download/${{ needs.extract-version.outputs.version }}/binarius-linux-amd64
+            chmod +x binarius-linux-amd64
+            sudo mv binarius-linux-amd64 /usr/local/bin/binarius
+            ```
+
+            **Linux ARM64 (aarch64)**:
+            ```bash
+            curl -LO https://github.com/nixknight/binarius/releases/download/${{ needs.extract-version.outputs.version }}/binarius-linux-arm64
+            chmod +x binarius-linux-arm64
+            sudo mv binarius-linux-arm64 /usr/local/bin/binarius
+            ```
+
+            ### Verify Installation
+
+            ```bash
+            # Download checksum file
+            curl -LO https://github.com/nixknight/binarius/releases/download/${{ needs.extract-version.outputs.version }}/SHA256SUMS
+
+            # Verify checksum (replace with your downloaded binary)
+            sha256sum -c SHA256SUMS --ignore-missing
+
+            # Check version
+            binarius version
+            ```
+
+            ### What's Changed
+
+            See auto-generated release notes below.
+
+          files: |
+            binarius-linux-amd64
+            binarius-linux-arm64
+            SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
