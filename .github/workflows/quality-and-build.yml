@@ -175,6 +175,9 @@ jobs:
           ls -lh binarius-linux-arm64
           file binarius-linux-arm64
 
+      - name: Smoke test built binary
+        run: make smoke-test BINARY=./binarius-linux-amd64
+
       - name: Generate SHA256 checksums
         if: inputs.generate-checksums
         run: |
