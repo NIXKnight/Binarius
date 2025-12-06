@@ -3,6 +3,7 @@ package installer
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -142,7 +143,9 @@ func TestVerifyChecksum(t *testing.T) {
 			}
 
 			if err != nil && tt.errContains != "" {
-				// Error message checking will be done after implementation
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, want error containing %q", err, tt.errContains)
+				}
 			}
 		})
 	}

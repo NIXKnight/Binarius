@@ -160,10 +160,12 @@ func compareTerragruntVersions(v1, v2 string) int {
 		var p1, p2 int
 
 		if i < len(parts1) {
-			fmt.Sscanf(parts1[i], "%d", &p1)
+			// Ignore error - if parsing fails, p1 remains 0 which is acceptable for version comparison
+			_, _ = fmt.Sscanf(parts1[i], "%d", &p1)
 		}
 		if i < len(parts2) {
-			fmt.Sscanf(parts2[i], "%d", &p2)
+			// Ignore error - if parsing fails, p2 remains 0 which is acceptable for version comparison
+			_, _ = fmt.Sscanf(parts2[i], "%d", &p2)
 		}
 
 		if p1 != p2 {

@@ -53,7 +53,7 @@ func TestRegister(t *testing.T) {
 		toolName  string
 		tool      Tool
 		wantErr   bool
-		setupFunc func() // Setup function to register tools before the test
+		setupFunc func(*testing.T) // Setup function to register tools before the test
 	}{
 		{
 			name:     "register new tool",
@@ -71,8 +71,10 @@ func TestRegister(t *testing.T) {
 				name:       "terraform",
 				binaryName: "terraform",
 			},
-			setupFunc: func() {
-				Register("terraform", &mockTool{name: "terraform"})
+			setupFunc: func(t *testing.T) {
+				if err := Register("terraform", &mockTool{name: "terraform"}); err != nil {
+					t.Fatalf("setup failed: %v", err)
+				}
 			},
 			wantErr: true,
 		},
@@ -92,7 +94,7 @@ func TestRegister(t *testing.T) {
 			Clear() // Clear before each subtest
 
 			if tt.setupFunc != nil {
-				tt.setupFunc()
+				tt.setupFunc(t)
 			}
 
 			err := Register(tt.toolName, tt.tool)
@@ -111,7 +113,9 @@ func TestGet(t *testing.T) {
 		name:       "terraform",
 		binaryName: "terraform",
 	}
-	Register("terraform", testTool)
+	if err := Register("terraform", testTool); err != nil {
+		t.Fatalf("setup failed: %v", err)
+	}
 
 	tests := []struct {
 		name     string
@@ -160,33 +164,36 @@ func TestList(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		setup    func()
+		setup    func(*testing.T)
 		wantLen  int
 		wantTool string // Tool name that should be in the list
 	}{
 		{
 			name: "empty registry",
-			setup: func() {
+			setup: func(t *testing.T) {
 				Clear()
 			},
 			wantLen: 0,
 		},
 		{
 			name: "single tool registered",
-			setup: func() {
+			setup: func(t *testing.T) {
 				Clear()
-				Register("terraform", &mockTool{name: "terraform"})
+				if err := Register("terraform", &mockTool{name: "terraform"}); err != nil {
+					t.Fatalf("setup failed: %v", err)
+				}
 			},
 			wantLen:  1,
 			wantTool: "terraform",
 		},
 		{
 			name: "multiple tools registered",
-			setup: func() {
+			setup: func(t *testing.T) {
 				Clear()
-				Register("terraform", &mockTool{name: "terraform"})
-				Register("tofu", &mockTool{name: "tofu"})
-				Register("terragrunt", &mockTool{name: "terragrunt"})
+				// Register multiple tools, ignoring errors for tools that fail
+				_ = Register("terraform", &mockTool{name: "terraform"})
+				_ = Register("tofu", &mockTool{name: "tofu"})
+				_ = Register("terragrunt", &mockTool{name: "terragrunt"})
 			},
 			wantLen:  3,
 			wantTool: "terraform",
@@ -195,7 +202,7 @@ func TestList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
+			tt.setup(t)
 
 			got := List()
 			if len(got) != tt.wantLen {
@@ -223,8 +230,12 @@ func TestClear(t *testing.T) {
 	Clear()
 
 	// Setup: Register some tools
-	Register("terraform", &mockTool{name: "terraform"})
-	Register("tofu", &mockTool{name: "tofu"})
+	if err := Register("terraform", &mockTool{name: "terraform"}); err != nil {
+		t.Fatalf("setup failed: %v", err)
+	}
+	if err := Register("tofu", &mockTool{name: "tofu"}); err != nil {
+		t.Fatalf("setup failed: %v", err)
+	}
 
 	// Verify tools are registered
 	if len(List()) != 2 {
@@ -251,8 +262,12 @@ func TestConcurrentAccess(t *testing.T) {
 	Clear()
 
 	// Register initial tools
-	Register("terraform", &mockTool{name: "terraform"})
-	Register("tofu", &mockTool{name: "tofu"})
+	if err := Register("terraform", &mockTool{name: "terraform"}); err != nil {
+		t.Fatalf("setup failed: %v", err)
+	}
+	if err := Register("tofu", &mockTool{name: "tofu"}); err != nil {
+		t.Fatalf("setup failed: %v", err)
+	}
 
 	var wg sync.WaitGroup
 	iterations := 100

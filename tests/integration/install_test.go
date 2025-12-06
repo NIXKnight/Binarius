@@ -54,11 +54,15 @@ func TestInstallWorkflow(t *testing.T) {
 		switch {
 		case r.URL.Path == "/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip":
 			w.Header().Set("Content-Type", "application/zip")
-			w.Write(mockZip)
+			if _, err := w.Write(mockZip); err != nil {
+				t.Errorf("failed to write mock response: %v", err)
+			}
 		case r.URL.Path == "/terraform/1.6.0/terraform_1.6.0_SHA256SUMS":
 			checksumContent := fmt.Sprintf("%s  terraform_1.6.0_linux_amd64.zip\n", mockChecksum)
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write([]byte(checksumContent))
+			if _, err := w.Write([]byte(checksumContent)); err != nil {
+				t.Errorf("failed to write mock response: %v", err)
+			}
 		default:
 			http.NotFound(w, r)
 		}
@@ -191,12 +195,16 @@ func TestInstallChecksumMismatch(t *testing.T) {
 	// Create server that returns ZIP
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/terraform.zip" {
-			w.Write(mockZip)
+			if _, err := w.Write(mockZip); err != nil {
+				t.Errorf("failed to write mock response: %v", err)
+			}
 		} else if r.URL.Path == "/terraform_SHA256SUMS" {
 			// Return WRONG checksum
 			wrongChecksum := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 			checksumContent := fmt.Sprintf("%s  terraform_1.6.0_linux_amd64.zip\n", wrongChecksum)
-			w.Write([]byte(checksumContent))
+			if _, err := w.Write([]byte(checksumContent)); err != nil {
+				t.Errorf("failed to write mock response: %v", err)
+			}
 		}
 	}))
 	defer server.Close()

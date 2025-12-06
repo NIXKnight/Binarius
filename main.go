@@ -10,8 +10,8 @@ import (
 
 // Version information (will be updated for releases)
 var (
-	Version   = "v0.1.0-dev"
-	BuildDate = "development"
+	Version   = "dev"
+	BuildDate = "unknown"
 	GitCommit = "unknown"
 )
 
