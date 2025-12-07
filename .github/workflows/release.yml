@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0  # Full history for proper version detection
 
@@ -64,7 +64,7 @@ jobs:
 
       # Tool versions
       go-version: '1.25'
-      golangci-lint-version: 'v1.61.0'
+      golangci-lint-version: 'v2.7.1'
 
   # Create GitHub release with artifacts
   create-release:
@@ -74,12 +74,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0  # Need full history for release notes
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: ${{ needs.quality-and-build.outputs.artifact-name }}
 

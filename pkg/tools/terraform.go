@@ -59,7 +59,7 @@ func (t *Terraform) ListVersions() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch terraform versions from HashiCorp: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch terraform versions: HTTP %d", resp.StatusCode)

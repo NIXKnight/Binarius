@@ -43,8 +43,7 @@ func TestBinariusHome(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set or clear environment variable
 			if tt.envVar != "" {
-				os.Setenv("BINARIUS_HOME", tt.envVar)
-				defer os.Unsetenv("BINARIUS_HOME")
+				t.Setenv("BINARIUS_HOME", tt.envVar)
 			}
 
 			got, err := BinariusHome()
@@ -100,8 +99,7 @@ func TestBinDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.envVar != "" {
-				os.Setenv("BINARIUS_BIN_DIR", tt.envVar)
-				defer os.Unsetenv("BINARIUS_BIN_DIR")
+				t.Setenv("BINARIUS_BIN_DIR", tt.envVar)
 			}
 
 			got, err := BinDir()
@@ -157,8 +155,7 @@ func TestCacheDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.envVar != "" {
-				os.Setenv("BINARIUS_CACHE_DIR", tt.envVar)
-				defer os.Unsetenv("BINARIUS_CACHE_DIR")
+				t.Setenv("BINARIUS_CACHE_DIR", tt.envVar)
 			}
 
 			got, err := CacheDir()

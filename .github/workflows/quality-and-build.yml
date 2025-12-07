@@ -60,7 +60,7 @@ on:
         description: 'golangci-lint version to use'
         type: string
         required: false
-        default: 'v1.61.0'
+        default: 'v2.7.1'
 
     outputs:
       artifact-name:
@@ -75,12 +75,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0  # Full history for proper version detection
 
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
+        uses: actions/setup-go@v6.1.0
         with:
           go-version: ${{ inputs.go-version }}
           cache: true  # Cache Go modules for faster builds
@@ -91,9 +91,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Verify Go modules
-        run: |
-          go mod download
-          go mod verify
+        run: go mod verify
 
       - name: Check code formatting
         run: |
@@ -122,12 +120,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v6.0.0
+        uses: actions/setup-go@v6.1.0
         with:
           go-version: ${{ inputs.go-version }}
           cache: true
@@ -175,6 +173,9 @@ jobs:
           ls -lh binarius-linux-arm64
           file binarius-linux-arm64
 
+      - name: Smoke test built binary
+        run: make smoke-test BINARY=./binarius-linux-amd64
+
       - name: Generate SHA256 checksums
         if: inputs.generate-checksums
         run: |
@@ -187,7 +188,7 @@ jobs:
 
       - name: Upload build artifacts
         if: inputs.upload-artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: binarius-binaries
           path: |
