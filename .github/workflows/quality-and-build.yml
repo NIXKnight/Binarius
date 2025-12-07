@@ -91,9 +91,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Verify Go modules
-        run: |
-          go mod download
-          go mod verify
+        run: go mod verify
 
       - name: Check code formatting
         run: |
