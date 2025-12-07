@@ -33,7 +33,7 @@ func VerifyChecksum(filePath, expectedSHA256 string) error {
 			fmt.Sprintf("Ensure the file exists and is readable: %s", filePath),
 		)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Create SHA256 hasher
 	hasher := sha256.New()

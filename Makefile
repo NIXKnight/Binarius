@@ -1,7 +1,7 @@
 # Binarius - Universal Binary Version Manager
 # Makefile for build automation
 
-.PHONY: build test clean lint fmt help
+.PHONY: build test clean lint fmt help smoke-test
 
 # Binary name
 BINARY_NAME=binarius
@@ -27,6 +27,8 @@ help:
 	@echo "Available targets:"
 	@echo "  build       - Build the binarius binary"
 	@echo "  test        - Run all tests"
+	@echo "  test-race   - Run tests with race detector"
+	@echo "  smoke-test  - Run end-to-end smoke tests on built binary"
 	@echo "  clean       - Remove built binaries and artifacts"
 	@echo "  lint        - Run golangci-lint (requires golangci-lint installed)"
 	@echo "  fmt         - Format Go source code"
@@ -48,6 +50,12 @@ test:
 test-race:
 	@echo "Running tests with race detector..."
 	$(GOTEST) -v -race ./...
+
+## smoke-test: Run end-to-end smoke tests on built binary
+## Usage: make smoke-test BINARY=./binarius-linux-amd64
+smoke-test:
+	@echo "Running smoke tests..."
+	@./scripts/smoke-test.sh $(if $(BINARY),$(BINARY),./$(BINARY_NAME))
 
 ## test-coverage: Generate test coverage report
 test-coverage:
