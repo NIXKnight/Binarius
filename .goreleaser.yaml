@@ -1,0 +1,64 @@
+version: 2
+
+project_name: binarius
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod verify
+
+builds:
+  - id: binarius
+    main: .
+    binary: binarius
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.BuildDate={{.Date}}
+      - -X main.GitCommit={{.Commit}}
+
+archives:
+  - id: binarius
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE*
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+changelog:
+  use: github-native
+
+release:
+  github:
+    owner: nixknight
+    name: binarius
+  draft: true
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Binarius {{ .Version }}
+
+    ### Installation
+
+    **Linux (amd64)**:
+    ```bash
+    curl -L https://github.com/nixknight/binarius/releases/download/{{ .Tag }}/binarius_{{ .Version }}_linux_amd64.tar.gz | tar xz
+    sudo mv binarius /usr/local/bin/
+    ```
+
+    **Linux (arm64)**:
+    ```bash
+    curl -L https://github.com/nixknight/binarius/releases/download/{{ .Tag }}/binarius_{{ .Version }}_linux_arm64.tar.gz | tar xz
+    sudo mv binarius /usr/local/bin/
+    ```
