@@ -12,16 +12,55 @@ Adding support for new tools is straightforward - see the extensibility document
 
 ## Installation
 
-Binarius is currently under active development. Install by building from source:
+### Download Binary (Recommended)
+
+Download the latest release for your platform:
+
+| Platform | Architecture | Download |
+|----------|--------------|----------|
+| Linux | amd64 (x86_64) | [binarius_linux_amd64.tar.gz](https://github.com/NIXKnight/Binarius/releases/latest/download/binarius_linux_amd64.tar.gz) |
+| Linux | arm64 (aarch64) | [binarius_linux_arm64.tar.gz](https://github.com/NIXKnight/Binarius/releases/latest/download/binarius_linux_arm64.tar.gz) |
+
+### Quick Install (Linux)
+
+One-liner installation for Linux amd64:
 
 ```bash
-git clone https://github.com/nixknight/binarius.git
-cd binarius
-make build
-sudo mv binarius /usr/local/bin/
-# Or for user install:
-mv binarius ~/.local/bin/
+curl -sL https://github.com/NIXKnight/Binarius/releases/latest/download/binarius_linux_amd64.tar.gz | tar xz -C ~/.local/bin binarius
 ```
+
+One-liner installation for Linux arm64:
+
+```bash
+curl -sL https://github.com/NIXKnight/Binarius/releases/latest/download/binarius_linux_arm64.tar.gz | tar xz -C ~/.local/bin binarius
+```
+
+### Verify Checksum
+
+For security, verify the downloaded archive against the published checksums:
+
+```bash
+# Download the checksums file
+curl -sLO https://github.com/NIXKnight/Binarius/releases/latest/download/checksums.txt
+
+# Verify the archive (example for amd64)
+sha256sum -c checksums.txt --ignore-missing
+```
+
+### Build from Source
+
+If you prefer to build from source:
+
+```bash
+git clone https://github.com/NIXKnight/Binarius.git
+cd Binarius
+make build
+mv binarius ~/.local/bin/
+# Or for system-wide install:
+sudo mv binarius /usr/local/bin/
+```
+
+### PATH Configuration
 
 Ensure `~/.local/bin` is in your PATH:
 
