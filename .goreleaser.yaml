@@ -27,7 +27,7 @@ builds:
 archives:
   - id: binarius
     format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE*
@@ -53,12 +53,12 @@ release:
 
     **Linux (amd64)**:
     ```bash
-    curl -L https://github.com/nixknight/binarius/releases/download/{{ .Tag }}/binarius_{{ .Version }}_linux_amd64.tar.gz | tar xz
+    curl -L https://github.com/nixknight/binarius/releases/latest/download/binarius_linux_amd64.tar.gz | tar xz
     sudo mv binarius /usr/local/bin/
     ```
 
     **Linux (arm64)**:
     ```bash
-    curl -L https://github.com/nixknight/binarius/releases/download/{{ .Tag }}/binarius_{{ .Version }}_linux_arm64.tar.gz | tar xz
+    curl -L https://github.com/nixknight/binarius/releases/latest/download/binarius_linux_arm64.tar.gz | tar xz
     sudo mv binarius /usr/local/bin/
     ```

@@ -7,8 +7,16 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": false,
       "versioning": "default",
-      "release-as": "0.1.0",
-      "extra-files": []
+      "extra-files": [],
+      "exclude-paths": [
+        ".github",
+        ".golangci.yml",
+        ".goreleaser.yaml",
+        ".gitignore",
+        ".gitattributes",
+        "release-please-config.json",
+        ".release-please-manifest.json"
+      ]
     }
   }
 }

@@ -6,6 +6,19 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - 'CHANGELOG.md'
+      - '.github/dependabot.yml'
+      - '.github/CODEOWNERS'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE/**'
+      - '.goreleaser.yaml'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
+      - '.gitignore'
+      - '.gitattributes'
 
 # Read-only permissions for PR validation
 permissions:
