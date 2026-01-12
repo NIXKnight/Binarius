@@ -75,12 +75,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for proper version detection
 
       - name: Setup Go
-        uses: actions/setup-go@v6.1.0
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ inputs.go-version }}
           cache: true  # Cache Go modules for faster builds
@@ -120,12 +120,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v6.1.0
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ inputs.go-version }}
           cache: true
